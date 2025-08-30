@@ -1,4 +1,4 @@
-# 🚀 GRAHAK - Intelligent CRM System for Customer Churn Prediction
+# 🚀 GRAHAK - CRM Simulator for Churn Prediction & Analysis
 
 A comprehensive machine learning application that predicts customer churn and provides proactive retention strategies using advanced AI techniques.
 
