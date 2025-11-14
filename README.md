@@ -1,8 +1,8 @@
-# 🚀 GRAHAK - CRM Simulator for Churn Prediction & Analysis
+#  GRAHAK - CRM Simulator for Churn Prediction & Analysis
 
 A comprehensive machine learning application that predicts customer churn and provides proactive retention strategies using advanced AI techniques.
 
-## 📋 Table of Contents
+##  Table of Contents
 - [Overview](#overview)
 - [Features](#features)
 - [Dataset](#dataset)
@@ -13,7 +13,7 @@ A comprehensive machine learning application that predicts customer churn and pr
 - [Contributing](#contributing)
 - [License](#license)
 
-## 🎯 Overview
+##  Overview
 
 **GRAHAK** is an intelligent Customer Relationship Management (CRM) system designed to predict customer churn and enable proactive retention strategies. Built using Streamlit and advanced machine learning algorithms, this system analyzes customer behavior patterns to identify at-risk customers and provides actionable insights for business decision-making.
 
@@ -24,46 +24,46 @@ A comprehensive machine learning application that predicts customer churn and pr
 - **AI Optimization**: Use genetic algorithms for hyperparameter tuning
 - **Interactive Analytics**: Provide real-time insights through an intuitive dashboard
 
-## ✨ Features
+##  Features
 
-### 🤖 Machine Learning Models
+###  Machine Learning Models
 - **Logistic Regression**: Linear approach for baseline predictions
 - **Decision Trees**: Rule-based interpretable models
 - **Random Forest**: Ensemble method for improved accuracy
 - **Cross-validation**: Robust model evaluation
 
-### 🎯 Customer Analytics
+###  Customer Analytics
 - **K-Means Clustering**: Segment customers into meaningful groups
 - **Association Rules Mining**: Discover patterns using Apriori algorithm
 - **Feature Engineering**: Automatic creation of relevant features
 - **Sentiment Analysis**: NLP-based customer sentiment evaluation
 
-### ⚡ AI Optimization
+###  AI Optimization
 - **Genetic Algorithm**: Automated hyperparameter optimization
 - **Multi-objective Optimization**: Balance accuracy, precision, and recall
 - **Evolutionary Strategies**: Advanced optimization techniques
 
-### 📊 Interactive Dashboard
+###  Interactive Dashboard
 - **Real-time Predictions**: Interactive churn probability calculator
 - **Data Visualization**: Comprehensive charts and plots
 - **Model Performance**: Detailed evaluation metrics
 - **Customer Profiling**: Individual customer risk assessment
 
-### 🔍 Advanced Analytics
+###  Advanced Analytics
 - **Feature Importance**: Understand which factors drive churn
 - **ROC Curves**: Visualize model performance
 - **Confusion Matrix**: Detailed classification analysis
 - **Cross-validation Scores**: Robust performance evaluation
 
-## 📁 Dataset
+##  Dataset
 
 The project uses [real telecom customer](https://huggingface.co/datasets/aai510-group1/telco-customer-churn) data with the following structure:
 
 ```
 data/
-├── train.csv      # Training dataset
-├── test.csv       # Test dataset for evaluation
-└── validation.csv # Validation dataset
+ train.csv      # Training dataset
+ test.csv       # Test dataset for evaluation
+ validation.csv # Validation dataset
 ```
 
 ### Key Features
@@ -72,7 +72,7 @@ data/
 - **Usage Patterns**: Monthly charges, tenure, service usage
 - **Churn Indicators**: Historical churn data and reasons
 
-## 🚀 Installation
+##  Installation
 
 ### Prerequisites
 - Python 3.8 or higher
@@ -95,7 +95,7 @@ Ensure your data files are in the `data/` directory:
 - `test.csv` - Test dataset (optional)
 - `validation.csv` - Validation dataset (optional)
 
-## 🏃‍♂️ Usage
+##  Usage
 
 ### Running the Application
 ```bash
@@ -106,57 +106,57 @@ The application will start a local web server (typically at `http://localhost:85
 
 ### Navigation Guide
 
-1. **🏠 Home**: Project overview and data loading
-2. **📊 Data Overview**: Explore dataset structure and statistics
-3. **🤖 Churn Prediction**: Train and evaluate ML models
-4. **🎯 Customer Segmentation**: Analyze customer clusters
-5. **🔍 Association Rules**: Discover behavioral patterns
-6. **⚡ AI Optimization**: Genetic algorithm optimization
-7. **📈 Model Performance**: Comprehensive model evaluation
-8. **🎮 Interactive Prediction**: Real-time churn prediction
+1. ** Home**: Project overview and data loading
+2. ** Data Overview**: Explore dataset structure and statistics
+3. ** Churn Prediction**: Train and evaluate ML models
+4. ** Customer Segmentation**: Analyze customer clusters
+5. ** Association Rules**: Discover behavioral patterns
+6. ** AI Optimization**: Genetic algorithm optimization
+7. ** Model Performance**: Comprehensive model evaluation
+8. ** Interactive Prediction**: Real-time churn prediction
 
 ### Quick Start Guide
 
-1. **Load Data**: Click "📁 Load Real Dataset" on the home page
-2. **Explore Data**: Navigate to "📊 Data Overview" to understand your dataset
-3. **Train Models**: Go to "🤖 Churn Prediction" and train ML models
-4. **Analyze Segments**: Use "🎯 Customer Segmentation" for clustering
-5. **Optimize**: Run "⚡ AI Optimization" for hyperparameter tuning
-6. **Predict**: Use "🎮 Interactive Prediction" for real-time predictions
+1. **Load Data**: Click " Load Real Dataset" on the home page
+2. **Explore Data**: Navigate to " Data Overview" to understand your dataset
+3. **Train Models**: Go to " Churn Prediction" and train ML models
+4. **Analyze Segments**: Use " Customer Segmentation" for clustering
+5. **Optimize**: Run " AI Optimization" for hyperparameter tuning
+6. **Predict**: Use " Interactive Prediction" for real-time predictions
 
-## 🏗️ Technical Architecture
+##  Technical Architecture
 
 ### Core Components
 
 ```
-├── Data Processing
-│   ├── Data loading and validation
-│   ├── Missing value handling
-│   ├── Feature engineering
-│   └── Label encoding
-│
-├── Machine Learning Pipeline
-│   ├── Model training (LR, DT, RF)
-│   ├── Cross-validation
-│   ├── Hyperparameter tuning
-│   └── Performance evaluation
-│
-├── Analytics Engine
-│   ├── Customer segmentation (K-Means)
-│   ├── Association rules mining
-│   ├── Feature importance analysis
-│   └── Sentiment analysis
-│
-├── AI Optimization
-│   ├── Genetic algorithm implementation
-│   ├── Multi-objective optimization
-│   └── Evolutionary strategies
-│
-└── User Interface
-    ├── Streamlit dashboard
-    ├── Interactive visualizations
-    ├── Real-time predictions
-    └── Performance monitoring
+ Data Processing
+    Data loading and validation
+    Missing value handling
+    Feature engineering
+    Label encoding
+
+ Machine Learning Pipeline
+    Model training (LR, DT, RF)
+    Cross-validation
+    Hyperparameter tuning
+    Performance evaluation
+
+ Analytics Engine
+    Customer segmentation (K-Means)
+    Association rules mining
+    Feature importance analysis
+    Sentiment analysis
+
+ AI Optimization
+    Genetic algorithm implementation
+    Multi-objective optimization
+    Evolutionary strategies
+
+ User Interface
+     Streamlit dashboard
+     Interactive visualizations
+     Real-time predictions
+     Performance monitoring
 ```
 
 ### Technologies Used
@@ -169,7 +169,7 @@ The application will start a local web server (typically at `http://localhost:85
 - **Optimization**: DEAP (Genetic Algorithms)
 - **Association Mining**: MLxtend
 
-## 📊 Model Performance
+##  Model Performance
 
 The system provides comprehensive model evaluation including:
 
@@ -190,7 +190,7 @@ The system provides comprehensive model evaluation including:
 - **Multi-objective**: Balance multiple performance metrics
 - **Population-based**: Explore multiple solution candidates
 
-## 🔧 Configuration
+##  Configuration
 
 ### Model Parameters
 You can adjust model parameters in the script:
@@ -213,7 +213,7 @@ The system automatically creates engineered features:
 - **Spending Patterns**: High/low spender classification
 - **Contract Analysis**: Contract type indicators
 
-## 🤝 Contributing
+##  Contributing
 
 We welcome contributions! Please follow these guidelines:
 
@@ -235,14 +235,14 @@ pip install -r requirements.txt
 python -m pytest tests/
 ```
 
-## 🙏 Acknowledgments
+##  Acknowledgments
 
 - **Scikit-learn** for machine learning algorithms
 - **Streamlit** for the web application framework
 - **Plotly** for interactive visualizations
 - **DEAP** for genetic algorithm implementation
 
-## 📞 Contact
+##  Contact
 
 For questions, suggestions, or collaborations:
 
@@ -251,4 +251,4 @@ For questions, suggestions, or collaborations:
 
 ---
 
-**Built with ❤️ for data-driven customer retention strategies**
+**Built with  for data-driven customer retention strategies**
