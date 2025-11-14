@@ -37,7 +37,7 @@ from deap import base, creator, tools, algorithms
 # Set page config
 st.set_page_config(
     page_title="GRAHAK - Intelligent CRM System",
-    page_icon="📊",
+    page_icon="",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -96,7 +96,7 @@ if 'test_data_loaded' not in st.session_state:
 def clean_corrupted_data(df):
     """Clean and fix corrupted data in the dataset."""
     df_clean = df.copy()
-    st.info("🧹 Cleaning data...")
+    st.info(" Cleaning data...")
     
     # Handle missing values in key columns
     # For Churn Category and Churn Reason, nulls mean no churn (they only exist for churned customers)
@@ -130,7 +130,7 @@ def load_real_data():
         
         if os.path.exists(train_path):
             df_train = pd.read_csv(train_path)
-            st.info(f"✅ Loaded training data: {len(df_train)} samples")
+            st.info(f" Loaded training data: {len(df_train)} samples")
             
             # Clean any corrupted data
             df_train = clean_corrupted_data(df_train)
@@ -138,18 +138,18 @@ def load_real_data():
             
             if os.path.exists(test_path):
                 df_test = pd.read_csv(test_path)
-                st.info(f"✅ Loaded test data: {len(df_test)} samples")
+                st.info(f" Loaded test data: {len(df_test)} samples")
                 
                 # Clean test data
                 df_test = clean_corrupted_data(df_test)
                 datasets['test'] = df_test
                 st.session_state.test_data_loaded = True
             else:
-                st.warning("⚠️ Test data not found. Will use train/test split for evaluation.")
+                st.warning(" Test data not found. Will use train/test split for evaluation.")
             
             return df_train, datasets
         else:
-            st.error(f"❌ Training data not found at {train_path}")
+            st.error(f" Training data not found at {train_path}")
             return None, None
 
     except Exception as e:
@@ -456,41 +456,41 @@ def genetic_algorithm_tuning(X, y, population_size=20, generations=10):
 
 # Streamlit App
 def main():
-    st.markdown('<h1 class="main-header">🚀 Intelligent CRM System for Customer Churn Prediction</h1>', 
+    st.markdown('<h1 class="main-header"> Intelligent CRM System for Customer Churn Prediction</h1>', 
                 unsafe_allow_html=True)
     
     # Sidebar
-    st.sidebar.title("🎛️ Navigation")
+    st.sidebar.title(" Navigation")
     page = st.sidebar.radio("Choose a section:", [
-        "🏠 Home",
-        "📊 Data Overview", 
-        "🤖 Churn Prediction",
-        "🎯 Customer Segmentation",
-        "🔍 Association Rules",
-        "⚡ AI Optimization",
-        "📈 Model Performance",
-        "🎮 Interactive Prediction"
+        " Home",
+        " Data Overview", 
+        " Churn Prediction",
+        " Customer Segmentation",
+        " Association Rules",
+        " AI Optimization",
+        " Model Performance",
+        " Interactive Prediction"
     ])
     
-    if page == "🏠 Home":
+    if page == " Home":
         show_home_page()
-    elif page == "📊 Data Overview":
+    elif page == " Data Overview":
         show_data_overview()
-    elif page == "🤖 Churn Prediction":
+    elif page == " Churn Prediction":
         show_churn_prediction()
-    elif page == "🎯 Customer Segmentation":
+    elif page == " Customer Segmentation":
         show_customer_segmentation()
-    elif page == "🔍 Association Rules":
+    elif page == " Association Rules":
         show_association_rules()
-    elif page == "⚡ AI Optimization":
+    elif page == " AI Optimization":
         show_ai_optimization()
-    elif page == "📈 Model Performance":
+    elif page == " Model Performance":
         show_model_performance()
-    elif page == "🎮 Interactive Prediction":
+    elif page == " Interactive Prediction":
         show_interactive_prediction()
 
 def show_home_page():
-    st.markdown("## 🎯 Project Overview")
+    st.markdown("##  Project Overview")
     
     col1, col2 = st.columns([2, 1])
     
@@ -500,7 +500,7 @@ def show_home_page():
         
         This comprehensive system demonstrates advanced machine learning techniques for customer churn prediction using real telecom data:
         
-        **🔍 Key Features:**
+        ** Key Features:**
         - **Real Data Integration**: Uses actual telecom customer datasets
         - **Classification Models**: Logistic Regression, Decision Trees, Random Forest
         - **Customer Segmentation**: K-Means clustering of churned customers  
@@ -509,7 +509,7 @@ def show_home_page():
         - **NLP Integration**: Sentiment analysis of customer support tickets
         - **Interactive Predictions**: Real-time churn probability assessment
         
-        **📊 Technical Implementation:**
+        ** Technical Implementation:**
         - Automatic feature engineering based on dataset structure
         - Advanced ML pipelines with cross-validation
         - Real-time interactive dashboards
@@ -520,7 +520,7 @@ def show_home_page():
     with col2:
         st.markdown("""
         <div class="metric-card">
-        <h3>🚀 Quick Start</h3>
+        <h3> Quick Start</h3>
         <p>1. Load real data from /data folder</p>
         <p>2. Explore dataset structure</p>
         <p>3. Train ML models</p>  
@@ -536,10 +536,10 @@ def show_home_page():
     col1, col2 = st.columns([3, 1])
     
     with col1:
-        load_button = st.button("📁 Load Real Dataset", type="primary", use_container_width=True)
+        load_button = st.button(" Load Real Dataset", type="primary", use_container_width=True)
     
     with col2:
-        if st.button("🔄 Clear Cache", use_container_width=True):
+        if st.button(" Clear Cache", use_container_width=True):
             st.cache_data.clear()
             st.session_state.data_loaded = False
             st.session_state.model_trained = False
@@ -571,7 +571,7 @@ def show_home_page():
                     st.session_state.datasets = datasets
                     st.session_state.data_loaded = True
                     
-                    st.success("✅ Real data loaded and processed successfully!")
+                    st.success(" Real data loaded and processed successfully!")
                     
                     # Show basic stats
                     col1, col2, col3, col4 = st.columns(4)
@@ -603,29 +603,29 @@ def show_home_page():
                     # Show test data info if available
                     if st.session_state.test_data_loaded and 'test' in datasets:
                         test_df = datasets['test']
-                        st.info(f"✅ Test dataset loaded: {len(test_df)} samples")
+                        st.info(f" Test dataset loaded: {len(test_df)} samples")
                         if target_col in test_df.columns:
                             test_churn_rate = test_df[target_col].mean()
                             st.metric("Test Data Churn Rate", f"{test_churn_rate:.2%}")
                 else:
-                    st.error("❌ Failed to load data. Please check if the CSV files exist in the /data folder.")
+                    st.error(" Failed to load data. Please check if the CSV files exist in the /data folder.")
                     
             except Exception as e:
-                st.error(f"❌ Error loading data: {str(e)}")
+                st.error(f" Error loading data: {str(e)}")
                 st.info("Try clearing the cache and reloading the data.")
 
 def show_data_overview():
-    st.markdown('<h2 class="sub-header">📊 Real Data Overview & Analysis</h2>', unsafe_allow_html=True)
+    st.markdown('<h2 class="sub-header"> Real Data Overview & Analysis</h2>', unsafe_allow_html=True)
     
     if not st.session_state.data_loaded:
-        st.warning("⚠️ Please load real data first from the Home page!")
+        st.warning(" Please load real data first from the Home page!")
         return
     
     df = st.session_state.df
     datasets = st.session_state.datasets
     
     # Dataset Info
-    st.subheader("📋 Dataset Information")
+    st.subheader(" Dataset Information")
     
     col1, col2 = st.columns([2, 1])
     
@@ -645,7 +645,7 @@ def show_data_overview():
         st.dataframe(dtype_df)
     
     with col2:
-        st.subheader("🎯 Key Metrics")
+        st.subheader(" Key Metrics")
         st.metric("Total Samples", len(df))
         st.metric("Total Features", len(df.columns))
         st.metric("Missing Values", df.isnull().sum().sum())
@@ -675,7 +675,7 @@ def show_data_overview():
                 st.metric("Test Churn Rate", f"{test_churn_rate:.2%}")
     
     # Statistical Summary
-    st.subheader("📈 Statistical Summary")
+    st.subheader(" Statistical Summary")
     try:
         # Get numeric columns more carefully
         numeric_cols = []
@@ -711,7 +711,7 @@ def show_data_overview():
         st.info("This might be due to data type conversion issues. Please check your data integrity.")
     
     # Data Quality Check
-    st.subheader("🔍 Data Quality Assessment")
+    st.subheader(" Data Quality Assessment")
     quality_issues = []
     
     for col in df.columns:
@@ -719,22 +719,22 @@ def show_data_overview():
             # Check for potential data corruption in string columns
             max_length = df[col].astype(str).str.len().max()
             if max_length > 100:
-                quality_issues.append(f"⚠️ Column '{col}' has unusually long values (max: {max_length} chars)")
+                quality_issues.append(f" Column '{col}' has unusually long values (max: {max_length} chars)")
             
             # Check for mixed data types
             unique_types = set(type(x).__name__ for x in df[col].dropna())
             if len(unique_types) > 1:
-                quality_issues.append(f"⚠️ Column '{col}' has mixed data types: {unique_types}")
+                quality_issues.append(f" Column '{col}' has mixed data types: {unique_types}")
     
     if quality_issues:
         st.warning("Data quality issues detected:")
         for issue in quality_issues:
             st.write(issue)
     else:
-        st.success("✅ No major data quality issues detected!")
+        st.success(" No major data quality issues detected!")
     
     # Feature Distribution Plots
-    st.subheader("🔍 Feature Distributions")
+    st.subheader(" Feature Distributions")
     
     # Select columns for visualization
     try:
@@ -790,7 +790,7 @@ def show_data_overview():
     # Correlation Analysis (for numeric features only)
     try:
         if len(safe_numeric_cols) > 1:
-            st.subheader("🌡️ Feature Correlations")
+            st.subheader(" Feature Correlations")
             
             # Create clean numeric dataframe for correlation
             correlation_df = df[safe_numeric_cols].copy()
@@ -814,7 +814,7 @@ def show_data_overview():
         st.error(f"Error creating correlation heatmap: {str(e)}")
     
     # Data Sample
-    st.subheader("📋 Sample Data")
+    st.subheader(" Sample Data")
     try:
         # Show a clean sample of the data
         sample_df = df.head(10)
@@ -829,10 +829,10 @@ def show_data_overview():
         st.error(f"Error displaying data sample: {str(e)}")
 
 def show_churn_prediction():
-    st.markdown('<h2 class="sub-header">🤖 Churn Prediction Models</h2>', unsafe_allow_html=True)
+    st.markdown('<h2 class="sub-header"> Churn Prediction Models</h2>', unsafe_allow_html=True)
     
     if not st.session_state.data_loaded:
-        st.warning("⚠️ Please load real data first from the Home page!")
+        st.warning(" Please load real data first from the Home page!")
         return
     
     df = st.session_state.df
@@ -842,12 +842,12 @@ def show_churn_prediction():
     target_col = 'Churn'
     
     if target_col not in df.columns:
-        st.error(f"❌ Target column '{target_col}' not found in the dataset!")
+        st.error(f" Target column '{target_col}' not found in the dataset!")
         st.write("Available columns:", df.columns.tolist())
         return
     
     # Show target column statistics
-    st.subheader("🎯 Target Column Analysis")
+    st.subheader(" Target Column Analysis")
     st.write(f"**Selected target column:** `{target_col}`")
     
     target_stats = df[target_col].value_counts().to_dict()
@@ -862,16 +862,16 @@ def show_churn_prediction():
     st.metric("Churn Rate", f"{churn_rate:.1%} ({churned_count}/{total_samples})")
     
     if churned_count == 0:
-        st.error("⚠️ **Warning: No churned customers detected in target column!**")
+        st.error(" **Warning: No churned customers detected in target column!**")
         st.write("This might cause training issues. Please verify your target column selection.")
     elif churn_rate < 0.01:
-        st.warning(f"⚠️ **Very low churn rate detected: {churn_rate:.2%}**")
+        st.warning(f" **Very low churn rate detected: {churn_rate:.2%}**")
         st.write("This severe class imbalance might affect model performance.")
     else:
-        st.success(f"✅ **Good target distribution found!** Churn rate: {churn_rate:.1%}")
+        st.success(f" **Good target distribution found!** Churn rate: {churn_rate:.1%}")
     
     # Feature selection
-    st.subheader("🎯 Feature Selection")
+    st.subheader(" Feature Selection")
     
     # Get numeric features for modeling
     numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
@@ -914,7 +914,7 @@ def show_churn_prediction():
     st.session_state.target_column = target_col
     
     # Test data options
-    st.subheader("🧪 Test Data Configuration")
+    st.subheader(" Test Data Configuration")
     
     if st.session_state.test_data_loaded and 'test' in datasets:
         use_test_data = st.checkbox("Use separate test dataset for evaluation", value=True)
@@ -937,7 +937,7 @@ def show_churn_prediction():
         st.info("No separate test dataset found. Will use train/test split for evaluation.")
         test_size = st.slider("Test set size", 0.1, 0.4, 0.2, 0.05)
     
-    if st.button("🚀 Train Classification Models", type="primary"):
+    if st.button(" Train Classification Models", type="primary"):
         with st.spinner("Training multiple ML models on real data..."):
             # Prepare features
             X = df[selected_features].copy()
@@ -968,7 +968,7 @@ def show_churn_prediction():
             class_counts = y_train.value_counts()
             unique_classes = y_train.unique()
             
-            st.subheader("🎯 Target Class Distribution")
+            st.subheader(" Target Class Distribution")
             st.write(f"**Unique classes found:** {sorted(unique_classes)}")
             st.write(f"**Class distribution:**")
             for class_val, count in class_counts.items():
@@ -977,7 +977,7 @@ def show_churn_prediction():
             
             # Check if we have at least 2 classes
             if len(unique_classes) < 2:
-                st.error("❌ **Cannot train models: Only one class found in target variable!**")
+                st.error(" **Cannot train models: Only one class found in target variable!**")
                 st.write("**Possible solutions:**")
                 st.write("1. Check if the target column is correctly identified")
                 st.write("2. Verify that your dataset contains both churned and non-churned customers")
@@ -990,15 +990,15 @@ def show_churn_prediction():
             imbalance_ratio = max_class_count / min_class_count
             
             if imbalance_ratio > 10:
-                st.warning(f"⚠️ **Severe class imbalance detected!** Ratio: {imbalance_ratio:.1f}:1")
+                st.warning(f" **Severe class imbalance detected!** Ratio: {imbalance_ratio:.1f}:1")
                 st.write("This may affect model performance. Consider using:")
                 st.write("- Stratified sampling")
                 st.write("- Cost-sensitive learning")
                 st.write("- Synthetic data generation (SMOTE)")
             elif imbalance_ratio > 3:
-                st.info(f"ℹ️ **Moderate class imbalance detected.** Ratio: {imbalance_ratio:.1f}:1")
+                st.info(f"ℹ **Moderate class imbalance detected.** Ratio: {imbalance_ratio:.1f}:1")
             
-            st.success(f"✅ **Ready to train!** Found {len(unique_classes)} classes with sufficient samples.")
+            st.success(f" **Ready to train!** Found {len(unique_classes)} classes with sufficient samples.")
             
             # Train models
             results = train_classification_models(X_train, y_train, X_test, y_test)
@@ -1007,13 +1007,13 @@ def show_churn_prediction():
             st.session_state.y_test = y_test
             st.session_state.model_trained = True
         
-        st.success("✅ Models trained successfully on real data!")
+        st.success(" Models trained successfully on real data!")
     
     if st.session_state.model_trained:
         results = st.session_state.model_results
         
         # Model Comparison
-        st.subheader("📊 Model Performance Comparison")
+        st.subheader(" Model Performance Comparison")
         
         comparison_data = []
         for name, result in results.items():
@@ -1042,7 +1042,7 @@ def show_churn_prediction():
             if len(test_acc_values) > 0:
                 best_acc_idx = test_acc_values.idxmax()
                 best_acc = comparison_df.loc[best_acc_idx]
-                st.metric("🎯 Best Test Accuracy", f"{best_acc['Test Accuracy']:.3f}", 
+                st.metric(" Best Test Accuracy", f"{best_acc['Test Accuracy']:.3f}", 
                          delta=f"Model: {best_acc['Model']}")
         
         with col2:
@@ -1051,7 +1051,7 @@ def show_churn_prediction():
             if len(test_f1_values) > 0:
                 best_f1_idx = test_f1_values.idxmax()
                 best_f1 = comparison_df.loc[best_f1_idx]
-                st.metric("⚖️ Best Test F1-Score", f"{best_f1['Test F1-Score']:.3f}", 
+                st.metric(" Best Test F1-Score", f"{best_f1['Test F1-Score']:.3f}", 
                          delta=f"Model: {best_f1['Model']}")
         
         with col3:
@@ -1060,7 +1060,7 @@ def show_churn_prediction():
             if len(test_roc_values) > 0:
                 best_roc_idx = test_roc_values.idxmax()
                 best_roc = comparison_df.loc[best_roc_idx]
-                st.metric("📈 Best Test ROC-AUC", f"{best_roc['Test ROC-AUC']:.3f}", 
+                st.metric(" Best Test ROC-AUC", f"{best_roc['Test ROC-AUC']:.3f}", 
                          delta=f"Model: {best_roc['Model']}")
         
         # Detailed comparison table
@@ -1077,7 +1077,7 @@ def show_churn_prediction():
         
         # Feature Importance (Random Forest)
         if 'Random Forest' in results:
-            st.subheader("🌳 Feature Importance (Random Forest)")
+            st.subheader(" Feature Importance (Random Forest)")
             rf_model = results['Random Forest']['model']
             feature_importance = pd.DataFrame({
                 'Feature': selected_features,
@@ -1091,11 +1091,11 @@ def show_churn_prediction():
 # ... (rest of the functions remain mostly the same, but need to update show_model_performance to handle test data)
 
 def show_model_performance():
-    st.markdown('<h2 class="sub-header">📈 Comprehensive Model Performance Analysis</h2>', 
+    st.markdown('<h2 class="sub-header"> Comprehensive Model Performance Analysis</h2>', 
                 unsafe_allow_html=True)
     
     if not st.session_state.model_trained:
-        st.warning("⚠️ Please train models first in the Churn Prediction section!")
+        st.warning(" Please train models first in the Churn Prediction section!")
         return
     
     results = st.session_state.model_results
@@ -1103,7 +1103,7 @@ def show_model_performance():
     target_col = st.session_state.target_column
     
     # Model Selection
-    st.subheader("🎯 Select Model for Detailed Analysis")
+    st.subheader(" Select Model for Detailed Analysis")
     selected_model = st.selectbox("Choose Model:", list(results.keys()))
     
     model_result = results[selected_model]
@@ -1112,30 +1112,30 @@ def show_model_performance():
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
-        st.metric("🎯 Train Accuracy", f"{model_result['accuracy']:.3f}")
+        st.metric(" Train Accuracy", f"{model_result['accuracy']:.3f}")
         if 'test_accuracy' in model_result and model_result['test_accuracy'] != 'N/A':
-            st.metric("🎯 Test Accuracy", f"{model_result['test_accuracy']:.3f}")
+            st.metric(" Test Accuracy", f"{model_result['test_accuracy']:.3f}")
     
     with col2:
-        st.metric("⚖️ Train F1-Score", f"{model_result['f1_score']:.3f}")
+        st.metric(" Train F1-Score", f"{model_result['f1_score']:.3f}")
         if 'test_f1_score' in model_result and model_result['test_f1_score'] != 'N/A':
-            st.metric("⚖️ Test F1-Score", f"{model_result['test_f1_score']:.3f}")
+            st.metric(" Test F1-Score", f"{model_result['test_f1_score']:.3f}")
     
     with col3:
-        st.metric("🎪 Train Precision", f"{model_result['precision']:.3f}")
+        st.metric(" Train Precision", f"{model_result['precision']:.3f}")
         if 'test_precision' in model_result and model_result['test_precision'] != 'N/A':
-            st.metric("🎪 Test Precision", f"{model_result['test_precision']:.3f}")
+            st.metric(" Test Precision", f"{model_result['test_precision']:.3f}")
     
     with col4:
-        st.metric("🔍 Train Recall", f"{model_result['recall']:.3f}")
+        st.metric(" Train Recall", f"{model_result['recall']:.3f}")
         if 'test_recall' in model_result and model_result['test_recall'] != 'N/A':
-            st.metric("🔍 Test Recall", f"{model_result['test_recall']:.3f}")
+            st.metric(" Test Recall", f"{model_result['test_recall']:.3f}")
     
     # Confusion Matrix
     col1, col2 = st.columns(2)
     
     with col1:
-        st.subheader("🔥 Training Confusion Matrix")
+        st.subheader(" Training Confusion Matrix")
         cm_train = confusion_matrix(df[target_col], model_result['predictions'])
         
         fig = px.imshow(cm_train, text_auto=True, aspect="auto",
@@ -1147,7 +1147,7 @@ def show_model_performance():
     
     with col2:
         if 'test_predictions' in model_result and model_result['test_predictions'] is not None:
-            st.subheader("🔥 Test Confusion Matrix")
+            st.subheader(" Test Confusion Matrix")
             cm_test = confusion_matrix(st.session_state.y_test, model_result['test_predictions'])
             
             fig = px.imshow(cm_test, text_auto=True, aspect="auto",
@@ -1161,7 +1161,7 @@ def show_model_performance():
     col1, col2 = st.columns(2)
     
     with col1:
-        st.subheader("📊 Training ROC Curve")
+        st.subheader(" Training ROC Curve")
         if model_result['probabilities'] is not None:
             fpr, tpr, _ = roc_curve(df[target_col], model_result['probabilities'])
             
@@ -1173,7 +1173,7 @@ def show_model_performance():
     
     with col2:
         if 'test_probabilities' in model_result and model_result['test_probabilities'] is not None:
-            st.subheader("📊 Test ROC Curve")
+            st.subheader(" Test ROC Curve")
             fpr_test, tpr_test, _ = roc_curve(st.session_state.y_test, model_result['test_probabilities'])
             
             fig = go.Figure()
@@ -1183,7 +1183,7 @@ def show_model_performance():
             st.plotly_chart(fig, use_container_width=True)
     
     # Detailed Classification Report
-    st.subheader("📋 Detailed Training Classification Report")
+    st.subheader(" Detailed Training Classification Report")
     
     report_train = classification_report(df[target_col], model_result['predictions'], 
                                        target_names=['No Churn', 'Churn'], output_dict=True)
@@ -1192,7 +1192,7 @@ def show_model_performance():
     st.dataframe(report_train_df.round(3), use_container_width=True)
     
     if 'test_predictions' in model_result and model_result['test_predictions'] is not None:
-        st.subheader("📋 Detailed Test Classification Report")
+        st.subheader(" Detailed Test Classification Report")
         
         report_test = classification_report(st.session_state.y_test, model_result['test_predictions'], 
                                           target_names=['No Churn', 'Churn'], output_dict=True)
@@ -1201,7 +1201,7 @@ def show_model_performance():
         st.dataframe(report_test_df.round(3), use_container_width=True)
     
     # Model Comparison Summary
-    st.subheader("🏆 Model Ranking (Based on Test Performance)")
+    st.subheader(" Model Ranking (Based on Test Performance)")
     
     ranking_data = []
     for name, result in results.items():
@@ -1226,10 +1226,10 @@ def show_model_performance():
         st.info("No test performance metrics available for ranking.")
 
 def show_customer_segmentation():
-    st.markdown('<h2 class="sub-header">🎯 Customer Segmentation Analysis</h2>', unsafe_allow_html=True)
+    st.markdown('<h2 class="sub-header"> Customer Segmentation Analysis</h2>', unsafe_allow_html=True)
     
     if not st.session_state.data_loaded:
-        st.warning("⚠️ Please load real data first from the Home page!")
+        st.warning(" Please load real data first from the Home page!")
         return
     
     df = st.session_state.df
@@ -1238,7 +1238,7 @@ def show_customer_segmentation():
     target_col = 'Churn'
     
     if target_col not in df.columns:
-        st.error(f"❌ Target column '{target_col}' not found for segmentation!")
+        st.error(f" Target column '{target_col}' not found for segmentation!")
         return
     
     df_churned = df[df[target_col] == 1].copy()
@@ -1247,7 +1247,7 @@ def show_customer_segmentation():
         st.error("No churned customers found in the dataset!")
         return
     
-    st.info(f"📊 Analyzing {len(df_churned)} churned customers for segmentation")
+    st.info(f" Analyzing {len(df_churned)} churned customers for segmentation")
     
     # Feature selection for clustering
     numeric_cols = df_churned.select_dtypes(include=[np.number]).columns.tolist()
@@ -1279,10 +1279,10 @@ def show_customer_segmentation():
     col1, col2 = st.columns([1, 2])
     
     with col1:
-        n_clusters = st.slider("🎛️ Number of Clusters", min_value=2, max_value=8, value=4)
+        n_clusters = st.slider(" Number of Clusters", min_value=2, max_value=8, value=4)
     
     with col2:
-        if st.button("🎯 Perform Customer Segmentation", type="primary"):
+        if st.button(" Perform Customer Segmentation", type="primary"):
             with st.spinner("Performing customer segmentation..."):
                 cluster_result = perform_clustering(df_churned, cluster_features, n_clusters)
                 
@@ -1297,14 +1297,14 @@ def show_customer_segmentation():
                     st.session_state.cluster_features = used_features
                     st.session_state.clusters_created = True
                     
-                    st.success("✅ Customer segmentation completed!")
+                    st.success(" Customer segmentation completed!")
     
     if st.session_state.clusters_created:
         df_clustered = st.session_state.df_churned_clustered
         used_features = st.session_state.cluster_features
         
         # Cluster Overview
-        st.subheader("📊 Cluster Overview")
+        st.subheader(" Cluster Overview")
         
         # Create summary statistics for available features
         summary_cols = [col for col in used_features if col in df_clustered.columns]
@@ -1331,12 +1331,12 @@ def show_customer_segmentation():
                 st.plotly_chart(fig, use_container_width=True)
         
         # Cluster Characteristics
-        st.subheader("🎨 Cluster Characteristics")
+        st.subheader(" Cluster Characteristics")
         
         for cluster_id in sorted(df_clustered['ClusterLabel'].unique()):
             cluster_data = df_clustered[df_clustered['ClusterLabel'] == cluster_id]
             
-            with st.expander(f"📋 Cluster {cluster_id} ({len(cluster_data)} customers)"):
+            with st.expander(f" Cluster {cluster_id} ({len(cluster_data)} customers)"):
                 col1, col2 = st.columns(2)
                 
                 with col1:
@@ -1355,10 +1355,10 @@ def show_customer_segmentation():
                         st.dataframe(cluster_data[available_cols].head(3))
 
 def show_association_rules():
-    st.markdown('<h2 class="sub-header">🔍 Association Rules Mining</h2>', unsafe_allow_html=True)
+    st.markdown('<h2 class="sub-header"> Association Rules Mining</h2>', unsafe_allow_html=True)
     
     if not st.session_state.data_loaded:
-        st.warning("⚠️ Please load real data first from the Home page!")
+        st.warning(" Please load real data first from the Home page!")
         return
     
     df = st.session_state.df
@@ -1367,7 +1367,7 @@ def show_association_rules():
     target_col = 'Churn'
     
     if target_col not in df.columns:
-        st.error(f"❌ Target column '{target_col}' not found!")
+        st.error(f" Target column '{target_col}' not found!")
         return
     
     df_churned = df[df[target_col] == 1].copy()
@@ -1392,29 +1392,29 @@ def show_association_rules():
     col1, col2 = st.columns([1, 2])
     
     with col1:
-        min_support = st.slider("🎛️ Minimum Support", 0.05, 0.5, 0.1, 0.05)
-        min_confidence = st.slider("🎛️ Minimum Confidence", 0.3, 0.9, 0.5, 0.1)
+        min_support = st.slider(" Minimum Support", 0.05, 0.5, 0.1, 0.05)
+        min_confidence = st.slider(" Minimum Confidence", 0.3, 0.9, 0.5, 0.1)
         
         st.write(f"**Available categorical features:** {len(categorical_cols)}")
         if categorical_cols:
             st.write("Sample features:", categorical_cols[:5])
     
     with col2:
-        if st.button("🔍 Discover Association Rules", type="primary"):
+        if st.button(" Discover Association Rules", type="primary"):
             with st.spinner("Mining association rules..."):
                 rules, frequent_itemsets = find_association_rules_real(df_churned, existing_categorical, min_support)
                 
                 if not rules.empty:
                     st.session_state.association_rules = rules
                     st.session_state.frequent_itemsets = frequent_itemsets
-                    st.success(f"✅ Found {len(rules)} association rules!")
+                    st.success(f" Found {len(rules)} association rules!")
                 else:
                     st.warning("No association rules found with the current parameters. Try lowering the support threshold.")
     
     if 'association_rules' in st.session_state and len(st.session_state.association_rules) > 0:
         rules_df = st.session_state.association_rules
         
-        st.subheader("📋 Discovered Association Rules")
+        st.subheader(" Discovered Association Rules")
         
         # Display rules in a more readable format
         display_rules = []
@@ -1437,31 +1437,31 @@ def show_association_rules():
             st.plotly_chart(fig, use_container_width=True)
 
 def show_ai_optimization():
-    st.markdown('<h2 class="sub-header">⚡ AI-Powered Hyperparameter Optimization</h2>', unsafe_allow_html=True)
+    st.markdown('<h2 class="sub-header"> AI-Powered Hyperparameter Optimization</h2>', unsafe_allow_html=True)
     
     if not st.session_state.data_loaded:
-        st.warning("⚠️ Please load real data first from the Home page!")
+        st.warning(" Please load real data first from the Home page!")
         return
     
     if not st.session_state.model_trained:
-        st.warning("⚠️ Please train models first in the Churn Prediction section!")
+        st.warning(" Please train models first in the Churn Prediction section!")
         return
     
     df = st.session_state.df
     
-    st.subheader("🧬 Genetic Algorithm Configuration")
+    st.subheader(" Genetic Algorithm Configuration")
     
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        population_size = st.slider("👥 Population Size", 10, 50, 20)
+        population_size = st.slider(" Population Size", 10, 50, 20)
     with col2:
-        generations = st.slider("🧬 Generations", 5, 20, 10)
+        generations = st.slider(" Generations", 5, 20, 10)
     with col3:
         st.write("**Target Model:** Random Forest")
         st.write("**Optimization Metric:** F1-Score")
     
-    if st.button("🚀 Start Genetic Algorithm Optimization", type="primary"):
+    if st.button(" Start Genetic Algorithm Optimization", type="primary"):
         with st.spinner("Running genetic algorithm optimization..."):
             # Get the data used for training
             X = df[st.session_state.selected_features].fillna(df[st.session_state.selected_features].median())
@@ -1473,7 +1473,7 @@ def show_ai_optimization():
             st.session_state.ga_best_params = best_params
             st.session_state.ga_log = log
             
-            st.success("✅ Genetic Algorithm optimization completed!")
+            st.success(" Genetic Algorithm optimization completed!")
             
             # Train model with optimized parameters
             optimized_rf = RandomForestClassifier(**best_params, random_state=42)
@@ -1483,7 +1483,7 @@ def show_ai_optimization():
             # Compare with original Random Forest
             original_rf = st.session_state.model_results['Random Forest']
             
-            st.subheader("🔬 Optimization Results")
+            st.subheader(" Optimization Results")
             
             col1, col2 = st.columns(2)
             
@@ -1510,18 +1510,18 @@ def show_ai_optimization():
             st.json(best_params)
 
 def show_interactive_prediction():
-    st.markdown('<h2 class="sub-header">🎮 Interactive Churn Prediction</h2>', 
+    st.markdown('<h2 class="sub-header"> Interactive Churn Prediction</h2>', 
                 unsafe_allow_html=True)
     
     if not st.session_state.model_trained:
-        st.warning("⚠️ Please train models first in the Churn Prediction section!")
+        st.warning(" Please train models first in the Churn Prediction section!")
         return
     
     df = st.session_state.df
     feature_names = st.session_state.selected_features
     target_col = st.session_state.target_column
     
-    st.subheader("👤 Enter Customer Information")
+    st.subheader(" Enter Customer Information")
     st.info("Adjust the sliders below based on your real dataset features")
     
     # Create dynamic input form based on selected features
@@ -1552,12 +1552,12 @@ def show_interactive_prediction():
                     key=f"slider_{feature}"
                 )
     
-    if st.button("🔮 Predict Churn Probability", type="primary", use_container_width=True):
+    if st.button(" Predict Churn Probability", type="primary", use_container_width=True):
         # Prepare input data
         input_data = pd.DataFrame([input_values])
         
         # Make predictions with all models
-        st.subheader("🎯 Prediction Results")
+        st.subheader(" Prediction Results")
         
         results = st.session_state.model_results
         
@@ -1576,9 +1576,9 @@ def show_interactive_prediction():
             
             with col2:
                 if prediction == 1:
-                    st.error("🚨 Likely to Churn")
+                    st.error(" Likely to Churn")
                 else:
-                    st.success("✅ Likely to Stay")
+                    st.success(" Likely to Stay")
             
             with col3:
                 if probability is not None:
@@ -1594,23 +1594,23 @@ def show_interactive_prediction():
                         st.success(f"Low Risk: {churn_prob:.2%}")
         
         # Show input summary
-        st.subheader("📋 Customer Profile Summary")
+        st.subheader(" Customer Profile Summary")
         
         profile_df = pd.DataFrame(list(input_values.items()), columns=['Feature', 'Value'])
         st.dataframe(profile_df, use_container_width=True)
 def show_interactive_prediction():
-    st.markdown('<h2 class="sub-header">🎮 Interactive Churn Prediction</h2>', 
+    st.markdown('<h2 class="sub-header"> Interactive Churn Prediction</h2>', 
                 unsafe_allow_html=True)
     
     if not st.session_state.model_trained:
-        st.warning("⚠️ Please train models first in the Churn Prediction section!")
+        st.warning(" Please train models first in the Churn Prediction section!")
         return
     
     df = st.session_state.df
     feature_names = st.session_state.selected_features
     target_col = st.session_state.target_column
     
-    st.subheader("👤 Enter Customer Information")
+    st.subheader(" Enter Customer Information")
     st.info("Adjust the sliders below based on your real dataset features")
     
     # Create dynamic input form based on selected features
@@ -1641,12 +1641,12 @@ def show_interactive_prediction():
                     key=f"slider_{feature}"
                 )
     
-    if st.button("🔮 Predict Churn Probability", type="primary", use_container_width=True):
+    if st.button(" Predict Churn Probability", type="primary", use_container_width=True):
         # Prepare input data
         input_data = pd.DataFrame([input_values])
         
         # Make predictions with all models
-        st.subheader("🎯 Prediction Results")
+        st.subheader(" Prediction Results")
         
         results = st.session_state.model_results
         
@@ -1665,9 +1665,9 @@ def show_interactive_prediction():
             
             with col2:
                 if prediction == 1:
-                    st.error("🚨 Likely to Churn")
+                    st.error(" Likely to Churn")
                 else:
-                    st.success("✅ Likely to Stay")
+                    st.success(" Likely to Stay")
             
             with col3:
                 if probability is not None:
@@ -1683,7 +1683,7 @@ def show_interactive_prediction():
                         st.success(f"Low Risk: {churn_prob:.2%}")
         
         # Show input summary
-        st.subheader("📋 Customer Profile Summary")
+        st.subheader(" Customer Profile Summary")
         
         profile_df = pd.DataFrame(list(input_values.items()), columns=['Feature', 'Value'])
         st.dataframe(profile_df, use_container_width=True)
