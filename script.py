@@ -8,6 +8,9 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import warnings
 import os
+import joblib
+import pickle
+from datetime import datetime
 warnings.filterwarnings('ignore')
 
 # ML Libraries
@@ -91,12 +94,21 @@ if 'target_column' not in st.session_state:
     st.session_state.target_column = 'Churn'
 if 'test_data_loaded' not in st.session_state:
     st.session_state.test_data_loaded = False
+if 'models_loaded' not in st.session_state:
+    st.session_state.models_loaded = False
+if 'model_info' not in st.session_state:
+    st.session_state.model_info = {}
+
+# Model storage directory
+MODEL_DIR = 'models'
+if not os.path.exists(MODEL_DIR):
+    os.makedirs(MODEL_DIR)
 
 # Data cleaning and validation functions
 def clean_corrupted_data(df):
     """Clean and fix corrupted data in the dataset."""
     df_clean = df.copy()
-    st.info(" Cleaning data...")
+    # st.info(" Cleaning data...")
     
     # Handle missing values in key columns
     # For Churn Category and Churn Reason, nulls mean no churn (they only exist for churned customers)
@@ -130,7 +142,6 @@ def load_real_data():
         
         if os.path.exists(train_path):
             df_train = pd.read_csv(train_path)
-            st.info(f" Loaded training data: {len(df_train)} samples")
             
             # Clean any corrupted data
             df_train = clean_corrupted_data(df_train)
@@ -138,18 +149,14 @@ def load_real_data():
             
             if os.path.exists(test_path):
                 df_test = pd.read_csv(test_path)
-                st.info(f" Loaded test data: {len(df_test)} samples")
                 
                 # Clean test data
                 df_test = clean_corrupted_data(df_test)
                 datasets['test'] = df_test
                 st.session_state.test_data_loaded = True
-            else:
-                st.warning(" Test data not found. Will use train/test split for evaluation.")
             
             return df_train, datasets
         else:
-            st.error(f" Training data not found at {train_path}")
             return None, None
 
     except Exception as e:
@@ -268,6 +275,96 @@ def simulate_nlp_features_real(df):
     df['MentionedCompetitor'] = np.random.choice([0, 1], n_samples, p=[0.8, 0.2])
     
     return df
+
+# Model Persistence Functions
+def save_models(models_dict, feature_names, model_info):
+    """Save trained models and metadata to disk."""
+    try:
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        
+        # Save each model
+        model_paths = {}
+        for model_name, model_data in models_dict.items():
+            model_filename = f"{model_name.replace(' ', '_').lower()}_{timestamp}.pkl"
+            model_path = os.path.join(MODEL_DIR, model_filename)
+            joblib.dump(model_data['model'], model_path)
+            model_paths[model_name] = model_path
+        
+        # Save metadata
+        metadata = {
+            'timestamp': timestamp,
+            'feature_names': feature_names,
+            'model_paths': model_paths,
+            'model_info': model_info,
+            'performance_metrics': {
+                name: {
+                    'accuracy': data['accuracy'],
+                    'precision': data['precision'],
+                    'recall': data['recall'],
+                    'f1_score': data['f1_score'],
+                    'roc_auc': data.get('roc_auc'),
+                    'test_accuracy': data.get('test_accuracy'),
+                    'test_f1_score': data.get('test_f1_score')
+                }
+                for name, data in models_dict.items()
+            }
+        }
+        
+        metadata_path = os.path.join(MODEL_DIR, f'metadata_{timestamp}.pkl')
+        joblib.dump(metadata, metadata_path)
+        
+        return True, timestamp
+    except Exception as e:
+        st.error(f"Error saving models: {str(e)}")
+        return False, None
+
+def load_latest_models():
+    """Load the most recent trained models from disk."""
+    try:
+        if not os.path.exists(MODEL_DIR):
+            return None, None, None
+        
+        # Find latest metadata file
+        metadata_files = [f for f in os.listdir(MODEL_DIR) if f.startswith('metadata_')]
+        if not metadata_files:
+            return None, None, None
+        
+        latest_metadata = sorted(metadata_files)[-1]
+        metadata_path = os.path.join(MODEL_DIR, latest_metadata)
+        metadata = joblib.load(metadata_path)
+        
+        # Load models
+        models = {}
+        for model_name, model_path in metadata['model_paths'].items():
+            if os.path.exists(model_path):
+                models[model_name] = joblib.load(model_path)
+        
+        return models, metadata['feature_names'], metadata
+    except Exception as e:
+        st.error(f"Error loading models: {str(e)}")
+        return None, None, None
+
+def get_available_model_versions():
+    """Get list of all available model versions."""
+    try:
+        if not os.path.exists(MODEL_DIR):
+            return []
+        
+        metadata_files = [f for f in os.listdir(MODEL_DIR) if f.startswith('metadata_')]
+        versions = []
+        
+        for metadata_file in sorted(metadata_files, reverse=True):
+            metadata_path = os.path.join(MODEL_DIR, metadata_file)
+            metadata = joblib.load(metadata_path)
+            versions.append({
+                'timestamp': metadata['timestamp'],
+                'metrics': metadata['performance_metrics'],
+                'file': metadata_file
+            })
+        
+        return versions
+    except Exception as e:
+        return []
 
 # ML Model Functions
 def train_classification_models(X_train, y_train, X_test=None, y_test=None):
@@ -459,8 +556,91 @@ def main():
     st.markdown('<h1 class="main-header"> Intelligent CRM System for Customer Churn Prediction</h1>', 
                 unsafe_allow_html=True)
     
+    # Auto-load data on first run
+    if not st.session_state.data_loaded:
+        try:
+            data_result = load_real_data()
+            
+            if data_result[0] is not None:
+                combined_df, datasets = data_result
+                
+                # Preprocess the data
+                df_processed = preprocess_real_data(combined_df)
+                
+                # Create engineered features
+                df_final = create_engineered_features_real(df_processed)
+                
+                # Add simulated NLP features
+                df_final = simulate_nlp_features_real(df_final)
+                
+                st.session_state.df = df_final
+                st.session_state.datasets = datasets
+                st.session_state.data_loaded = True
+                
+                # Auto-load models if available
+                models, features, metadata = load_latest_models()
+                if models:
+                    st.session_state.models_loaded = True
+                    st.session_state.model_trained = True
+                    st.session_state.selected_features = features
+                    st.session_state.model_info = metadata
+                    
+                    # Auto-generate predictions
+                    try:
+                        X = df_final[features].copy()
+                        y = df_final['Churn'].copy()
+                        
+                        for col in X.columns:
+                            X[col] = pd.to_numeric(X[col], errors='coerce')
+                            X[col] = X[col].fillna(X[col].median())
+                        
+                        results = {}
+                        for model_name, model in models.items():
+                            y_pred = model.predict(X)
+                            y_pred_proba = model.predict_proba(X)[:, 1] if hasattr(model, 'predict_proba') else None
+                            
+                            results[model_name] = {
+                                'model': model,
+                                'accuracy': accuracy_score(y, y_pred),
+                                'precision': precision_score(y, y_pred, average='weighted', zero_division=0),
+                                'recall': recall_score(y, y_pred, average='weighted', zero_division=0),
+                                'f1_score': f1_score(y, y_pred, average='weighted', zero_division=0),
+                                'roc_auc': roc_auc_score(y, y_pred_proba) if y_pred_proba is not None else None,
+                                'predictions': y_pred,
+                                'probabilities': y_pred_proba
+                            }
+                        
+                        st.session_state.model_results = results
+                    except Exception as pred_error:
+                        # Models will be loaded when user visits prediction page
+                        st.session_state.model_results = None
+                
+                st.success(f"✓ System ready! Loaded {len(df_final):,} customer records")
+            else:
+                st.error("Failed to load data files from data/ directory")
+                
+        except Exception as e:
+            st.error(f"Could not auto-load data: {str(e)}")
+            st.info("Please check that data files exist in the data/ directory")
+    
     # Sidebar
     st.sidebar.title(" Navigation")
+    
+    # Show data and model status in sidebar
+    if st.session_state.data_loaded:
+        st.sidebar.success(" Data Loaded")
+        if 'df' in st.session_state.__dict__:
+            st.sidebar.metric("Records", f"{len(st.session_state.df):,}")
+    else:
+        st.sidebar.warning(" No Data")
+    
+    if st.session_state.models_loaded:
+        st.sidebar.success(" Models Ready")
+    else:
+        st.sidebar.info(" No Pre-trained Models")
+    
+    st.sidebar.markdown("---")
+    
     page = st.sidebar.radio("Choose a section:", [
         " Home",
         " Data Overview", 
@@ -471,6 +651,21 @@ def main():
         " Model Performance",
         " Interactive Prediction"
     ])
+    
+    # Quick action buttons in sidebar
+    st.sidebar.markdown("---")
+    st.sidebar.markdown("### Quick Actions")
+    
+    if st.sidebar.button(" Reload Data", use_container_width=True):
+        st.session_state.data_loaded = False
+        st.rerun()
+    
+    if st.sidebar.button(" Clear Cache", use_container_width=True):
+        st.cache_data.clear()
+        st.session_state.data_loaded = False
+        st.session_state.model_trained = False
+        st.session_state.clusters_created = False
+        st.sidebar.success("Cache cleared!")
     
     if page == " Home":
         show_home_page()
@@ -490,129 +685,193 @@ def main():
         show_interactive_prediction()
 
 def show_home_page():
-    st.markdown("##  Project Overview")
+    # st.markdown("## Welcome to GRAHAK CRM System")
     
+    # # System status overview
+    # col1, col2, col3, col4 = st.columns(4)
+    
+    # with col1:
+    #     if st.session_state.data_loaded and 'df' in st.session_state.__dict__:
+    #         st.metric("Customer Records", f"{len(st.session_state.df):,}")
+    #     else:
+    #         st.metric("Customer Records", "0")
+    
+    # with col2:
+    #     if st.session_state.models_loaded:
+    #         st.metric("Model Status", "Ready", delta="Pre-trained")
+    #     else:
+    #         st.metric("Model Status", "Not Available", delta="Need training")
+    
+    # # Calculate best model info once for use in multiple columns
+    # best_model_name = "N/A"
+    # best_model_score = None
+    
+    # if st.session_state.models_loaded and 'model_info' in st.session_state.__dict__:
+    #     # Use metadata from loaded models
+    #     metadata = st.session_state.model_info
+    #     if 'performance_metrics' in metadata:
+    #         best_result = max(metadata['performance_metrics'].items(), 
+    #                         key=lambda x: x[1].get('test_f1_score', x[1].get('f1_score', 0)))
+    #         best_model_name = best_result[0].split()[0]
+    #         best_model_score = best_result[1].get('test_f1_score', best_result[1].get('f1_score'))
+    # elif st.session_state.model_trained and 'model_results' in st.session_state.__dict__:
+    #     # Use current session model results
+    #     best_result = max(st.session_state.model_results.items(), 
+    #                      key=lambda x: x[1].get('test_f1_score', x[1].get('f1_score', 0)))
+    #     best_model_name = best_result[0].split()[0]
+    #     best_model_score = best_result[1].get('test_f1_score', best_result[1].get('f1_score'))
+    
+    # with col3:
+    #     st.metric("Best Model", best_model_name)
+    
+    # with col4:
+    #     if best_model_score is not None:
+    #         st.metric("F1-Score", f"{best_model_score:.3f}")
+    #     else:
+    #         st.metric("F1-Score", "N/A")
+    
+    # Data summary
+    if st.session_state.data_loaded and 'df' in st.session_state.__dict__:
+        df = st.session_state.df
+        
+        st.subheader(" Customer Data Summary")
+        
+        col1, col2, col3, col4, col5 = st.columns(5)
+        
+        with col1:
+            st.metric("Total Customers", f"{len(df):,}")
+        
+        with col2:
+            if 'Churn' in df.columns:
+                churn_rate = df['Churn'].mean()
+                st.metric("Churn Rate", f"{churn_rate:.1%}")
+        
+        with col3:
+            if 'Monthly Charge' in df.columns:
+                avg_revenue = df['Monthly Charge'].mean()
+                st.metric("Avg Revenue", f"${avg_revenue:.0f}")
+        
+        with col4:
+            if 'Tenure in Months' in df.columns:
+                avg_tenure = df['Tenure in Months'].mean()
+                st.metric("Avg Tenure", f"{avg_tenure:.0f}mo")
+        
+        with col5:
+            if 'Satisfaction Score' in df.columns:
+                avg_satisfaction = df['Satisfaction Score'].mean()
+                st.metric("Satisfaction", f"{avg_satisfaction:.1f}/5")
+    
+    st.markdown("---")
+    
+    # Main content
     col1, col2 = st.columns([2, 1])
     
     with col1:
         st.markdown("""
-        ### Welcome to the Intelligent CRM System!
         
-        This comprehensive system demonstrates advanced machine learning techniques for customer churn prediction using real telecom data:
+        Your system is **ready to use** with:
         
-        ** Key Features:**
-        - **Real Data Integration**: Uses actual telecom customer datasets
-        - **Classification Models**: Logistic Regression, Decision Trees, Random Forest
-        - **Customer Segmentation**: K-Means clustering of churned customers  
-        - **Pattern Discovery**: Association rules mining using Apriori algorithm
-        - **AI Optimization**: Genetic Algorithm for hyperparameter tuning
-        - **NLP Integration**: Sentiment analysis of customer support tickets
-        - **Interactive Predictions**: Real-time churn probability assessment
+        **Instant Features:**
+        - **Pre-loaded Data**: Customer data loaded automatically
+        - **Pre-trained Models**: High-accuracy models ready for predictions
+        - **Real-time Analysis**: Instant churn probability assessment
+        - **Customer Segmentation**: Automatic clustering of at-risk customers
+        - **Pattern Discovery**: Association rules for actionable insights
+        - **Comprehensive Reports**: Detailed analytics and visualizations
         
-        ** Technical Implementation:**
-        - Automatic feature engineering based on dataset structure
-        - Advanced ML pipelines with cross-validation
-        - Real-time interactive dashboards
-        - Comprehensive model evaluation metrics
-        - Test dataset evaluation for model performance
+        **Quick Actions:**
+        - **View Predictions**: Go to "Churn Prediction" to see instant results
+        - **Analyze Segments**: Check "Customer Segmentation" for groups
+        - **Find Patterns**: Use "Association Rules" for insights
+        - **Test Individual**: Try "Interactive Prediction" for single customers
+        - **Export Results**: Download predictions for CRM integration
         """)
+        
+        if st.session_state.model_trained:
+            st.success(" System ready! Navigate to any section to start analyzing.")
+        else:
+            st.info(" Data loaded. Visit 'Churn Prediction' to generate predictions.")
     
     with col2:
         st.markdown("""
-        <div class="metric-card">
-        <h3> Quick Start</h3>
-        <p>1. Load real data from /data folder</p>
-        <p>2. Explore dataset structure</p>
-        <p>3. Train ML models</p>  
-        <p>4. Analyze customer segments</p>
-        <p>5. Discover patterns</p>
-        <p>6. Optimize with AI</p>
-        <p>7. Make predictions</p>
-        <p>8. Evaluate on test data</p>
+        <div class="success-card">
+        <h3> System Status</h3>
         </div>
         """, unsafe_allow_html=True)
+        
+        status_items = []
+        if st.session_state.data_loaded:
+            status_items.append("✓ Data loaded automatically")
+        else:
+            status_items.append("✗ Data not loaded")
+        
+        if st.session_state.models_loaded:
+            status_items.append("✓ Pre-trained models available")
+        else:
+            status_items.append("✗ No pre-trained models")
+        
+        if st.session_state.model_trained:
+            status_items.append("✓ Predictions ready")
+        else:
+            status_items.append("⚠ Predictions not generated")
+        
+        for item in status_items:
+            st.write(item)
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        if not st.session_state.models_loaded:
+            st.warning("Train models in 'Churn Prediction' section")
     
-    # Load data button
-    col1, col2 = st.columns([3, 1])
-    
-    with col1:
-        load_button = st.button(" Load Real Dataset", type="primary", use_container_width=True)
-    
-    with col2:
-        if st.button(" Clear Cache", use_container_width=True):
-            st.cache_data.clear()
-            st.session_state.data_loaded = False
-            st.session_state.model_trained = False
-            st.session_state.clusters_created = False
-            st.session_state.test_data_loaded = False
-            st.success("Cache cleared! You can now reload the data.")
-    
-    if load_button:
-        with st.spinner("Loading real telecom customer datasets..."):
-            try:
-                # Clear cache before loading to ensure fresh data
-                st.cache_data.clear()
+    # Performance metrics if available
+    if st.session_state.model_trained and 'model_results' in st.session_state.__dict__:
+        st.markdown("---")
+        st.subheader(" Model Performance on Current Data")
+        
+        results = st.session_state.model_results
+        comparison_data = []
+        
+        for name, result in results.items():
+            comparison_data.append({
+                'Model': name,
+                'Accuracy': f"{result['accuracy']:.3f}",
+                'Precision': f"{result['precision']:.3f}",
+                'Recall': f"{result['recall']:.3f}",
+                'F1-Score': f"{result['f1_score']:.3f}"
+            })
+        
+        comparison_df = pd.DataFrame(comparison_data)
+        st.dataframe(comparison_df, use_container_width=True)
+        
+        # Quick actions
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            if st.button(" View Detailed Predictions", use_container_width=True, type="primary"):
+                st.session_state.page = " Churn Prediction"
+                st.rerun()
+        
+        with col2:
+            if st.button(" Analyze Customer Segments", use_container_width=True):
+                st.session_state.page = " Customer Segmentation"
+                st.rerun()
+        
+        with col3:
+            if st.button(" Export Predictions", use_container_width=True):
+                predictions_df = st.session_state.df.copy()
+                for name, result in results.items():
+                    predictions_df[f'{name}_Prediction'] = result['predictions']
+                    if result['probabilities'] is not None:
+                        predictions_df[f'{name}_Probability'] = result['probabilities']
                 
-                data_result = load_real_data()
-                
-                if data_result[0] is not None:
-                    combined_df, datasets = data_result
-                    
-                    # Preprocess the data
-                    df_processed = preprocess_real_data(combined_df)
-                    
-                    # Create engineered features
-                    df_final = create_engineered_features_real(df_processed)
-                    
-                    # Add simulated NLP features
-                    df_final = simulate_nlp_features_real(df_final)
-                    
-                    st.session_state.df = df_final
-                    st.session_state.datasets = datasets
-                    st.session_state.data_loaded = True
-                    
-                    st.success(" Real data loaded and processed successfully!")
-                    
-                    # Show basic stats
-                    col1, col2, col3, col4 = st.columns(4)
-                    
-                    # Find target column (churn)
-                    target_col = 'Churn'
-                    
-                    with col1:
-                        st.metric("Total Customers", len(df_final))
-                    with col2:
-                        if target_col in df_final.columns:
-                            churn_rate = df_final[target_col].mean() if df_final[target_col].dtype in ['int64', 'float64'] else 0
-                            st.metric("Churn Rate", f"{churn_rate:.2%}")
-                        else:
-                            st.metric("Features", len(df_final.columns))
-                    with col3:
-                        if 'Monthly Charge' in df_final.columns:
-                            avg_charge = df_final['Monthly Charge'].mean()
-                            st.metric("Avg Monthly Charge", f"${avg_charge:.2f}")
-                        else:
-                            st.metric("Numeric Features", len(df_final.select_dtypes(include=[np.number]).columns))
-                    with col4:
-                        if 'Tenure in Months' in df_final.columns:
-                            avg_tenure = df_final['Tenure in Months'].mean()
-                            st.metric("Avg Tenure", f"{avg_tenure:.1f} months")
-                        else:
-                            st.metric("Missing Values", df_final.isnull().sum().sum())
-                    
-                    # Show test data info if available
-                    if st.session_state.test_data_loaded and 'test' in datasets:
-                        test_df = datasets['test']
-                        st.info(f" Test dataset loaded: {len(test_df)} samples")
-                        if target_col in test_df.columns:
-                            test_churn_rate = test_df[target_col].mean()
-                            st.metric("Test Data Churn Rate", f"{test_churn_rate:.2%}")
-                else:
-                    st.error(" Failed to load data. Please check if the CSV files exist in the /data folder.")
-                    
-            except Exception as e:
-                st.error(f" Error loading data: {str(e)}")
-                st.info("Try clearing the cache and reloading the data.")
+                csv = predictions_df.to_csv(index=False)
+                st.download_button(
+                    label=" Download Predictions CSV",
+                    data=csv,
+                    file_name=f"churn_predictions_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                    mime="text/csv",
+                    use_container_width=True
+                )
 
 def show_data_overview():
     st.markdown('<h2 class="sub-header"> Real Data Overview & Analysis</h2>', unsafe_allow_html=True)
@@ -829,186 +1088,192 @@ def show_data_overview():
         st.error(f"Error displaying data sample: {str(e)}")
 
 def show_churn_prediction():
-    st.markdown('<h2 class="sub-header"> Churn Prediction Models</h2>', unsafe_allow_html=True)
+    st.markdown('<h2 class="sub-header"> Churn Prediction</h2>', unsafe_allow_html=True)
     
     if not st.session_state.data_loaded:
-        st.warning(" Please load real data first from the Home page!")
+        st.warning(" Please load customer data first from the Home page!")
         return
     
     df = st.session_state.df
-    datasets = st.session_state.datasets
-    
-    # Set target column
     target_col = 'Churn'
     
     if target_col not in df.columns:
         st.error(f" Target column '{target_col}' not found in the dataset!")
-        st.write("Available columns:", df.columns.tolist())
         return
     
-    # Show target column statistics
-    st.subheader(" Target Column Analysis")
-    st.write(f"**Selected target column:** `{target_col}`")
+    # Check for pre-trained models
+    models, features, metadata = load_latest_models()
+    use_pretrained = False
     
-    target_stats = df[target_col].value_counts().to_dict()
-    st.write(f"**Target distribution:** {target_stats}")
-    
-    # Check if target has sufficient positive samples
-    target_series = df[target_col]
-    churned_count = (target_series == 1).sum()
-    total_samples = len(target_series)
-    churn_rate = churned_count / total_samples if total_samples > 0 else 0
-    
-    st.metric("Churn Rate", f"{churn_rate:.1%} ({churned_count}/{total_samples})")
-    
-    if churned_count == 0:
-        st.error(" **Warning: No churned customers detected in target column!**")
-        st.write("This might cause training issues. Please verify your target column selection.")
-    elif churn_rate < 0.01:
-        st.warning(f" **Very low churn rate detected: {churn_rate:.2%}**")
-        st.write("This severe class imbalance might affect model performance.")
+    if models and features:
+        st.success(" Using pre-trained models for instant predictions")
+        
+        # Display model info
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            st.metric("Models Available", len(models))
+        with col2:
+            st.metric("Last Trained", metadata['timestamp'][:8])
+        with col3:
+            best_model = max(metadata['performance_metrics'].items(), 
+                           key=lambda x: x[1].get('test_f1_score', x[1]['f1_score']))
+            st.metric("Best Model", best_model[0].split()[0])
+        with col4:
+            best_score = best_model[1].get('test_f1_score', best_model[1]['f1_score'])
+            st.metric("Best F1-Score", f"{best_score:.3f}")
+        
+        # Use pre-trained models
+        use_pretrained = st.checkbox(" Use pre-trained models (Recommended for speed)", value=True)
+        
+        if use_pretrained:
+            st.info(" Getting predictions from pre-trained models...")
+            
+            try:
+                # Prepare features
+                X = df[features].copy()
+                y = df[target_col].copy()
+                
+                # Clean data
+                for col in X.columns:
+                    X[col] = pd.to_numeric(X[col], errors='coerce')
+                    X[col] = X[col].fillna(X[col].median())
+                
+                # Get predictions from all models
+                results = {}
+                for model_name, model in models.items():
+                    y_pred = model.predict(X)
+                    y_pred_proba = model.predict_proba(X)[:, 1] if hasattr(model, 'predict_proba') else None
+                    
+                    results[model_name] = {
+                        'model': model,
+                        'accuracy': accuracy_score(y, y_pred),
+                        'precision': precision_score(y, y_pred, average='weighted', zero_division=0),
+                        'recall': recall_score(y, y_pred, average='weighted', zero_division=0),
+                        'f1_score': f1_score(y, y_pred, average='weighted', zero_division=0),
+                        'roc_auc': roc_auc_score(y, y_pred_proba) if y_pred_proba is not None else None,
+                        'predictions': y_pred,
+                        'probabilities': y_pred_proba
+                    }
+                
+                st.session_state.model_results = results
+                st.session_state.model_trained = True
+                st.session_state.selected_features = features
+                
+                st.success(" Predictions generated successfully!")
+                
+                # Show quick metrics
+                st.subheader(" Model Performance on Current Data")
+                cols = st.columns(len(results))
+                for idx, (name, result) in enumerate(results.items()):
+                    with cols[idx]:
+                        st.metric(name, f"{result['accuracy']:.3f}", 
+                                delta=f"F1: {result['f1_score']:.3f}")
+                
+            except Exception as e:
+                st.error(f" Error using pre-trained models: {str(e)}")
+                st.info("Features in current data might not match trained models. Please retrain.")
+                use_pretrained = False
     else:
-        st.success(f" **Good target distribution found!** Churn rate: {churn_rate:.1%}")
+        use_pretrained = False
+        st.info(" No pre-trained models found. Training new models...")
     
-    # Feature selection
-    st.subheader(" Feature Selection")
-    
-    # Get numeric features for modeling
-    numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
-    if target_col in numeric_cols:
-        numeric_cols.remove(target_col)
-    
-    # Remove ID columns and other non-predictive columns
-    non_predictive_cols = ['Customer ID', 'Zip Code', 'Latitude', 'Longitude', 'Population']
-    numeric_cols = [col for col in numeric_cols if col not in non_predictive_cols]
-    
-    # Get categorical encoded features
-    categorical_encoded_cols = [col for col in df.columns if col.endswith('_encoded')]
-    
-    # Combine all potential features
-    all_potential_features = numeric_cols + categorical_encoded_cols
-    
-    # Recommended features based on domain knowledge
-    recommended_features = [
-        'Tenure in Months', 'Monthly Charge', 'Total Charges', 'Total Revenue',
-        'Age', 'Number of Dependents', 'Number of Referrals', 'Satisfaction Score',
-        'CLTV', 'Churn Score', 'TotalServices', 'HighSpender'
-    ]
-    
-    # Filter to only include features that actually exist in the dataset
-    existing_recommended_features = [col for col in recommended_features if col in all_potential_features]
-    
-    # Select features for modeling
-    selected_features = st.multiselect(
-        "Select features for modeling:", 
-        all_potential_features,
-        default=existing_recommended_features
-    )
-    
-    if not selected_features:
-        st.warning("Please select at least one feature for modeling.")
-        return
-    
-    # Store selected features in session state
-    st.session_state.selected_features = selected_features
-    st.session_state.target_column = target_col
-    
-    # Test data options
-    st.subheader(" Test Data Configuration")
-    
-    if st.session_state.test_data_loaded and 'test' in datasets:
-        use_test_data = st.checkbox("Use separate test dataset for evaluation", value=True)
-        test_df = datasets['test']
+    # Option to retrain models
+    if not use_pretrained or st.checkbox(" Retrain models for better accuracy", value=False):
+        st.subheader(" Model Training Configuration")
         
-        # Preprocess test data similarly to training data
-        test_df_processed = preprocess_real_data(test_df)
-        test_df_final = create_engineered_features_real(test_df_processed)
+        # Feature selection
+        numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+        if target_col in numeric_cols:
+            numeric_cols.remove(target_col)
         
-        # Prepare test features and target
-        X_test = test_df_final[selected_features].copy()
-        y_test = test_df_final[target_col].copy()
+        non_predictive_cols = ['Customer ID', 'Zip Code', 'Latitude', 'Longitude', 'Population']
+        numeric_cols = [col for col in numeric_cols if col not in non_predictive_cols]
         
-        # Handle missing values and ensure all features are numeric
-        for col in X_test.columns:
-            X_test[col] = pd.to_numeric(X_test[col], errors='coerce')
-            X_test[col] = X_test[col].fillna(X_test[col].median())
-    else:
-        use_test_data = False
-        st.info("No separate test dataset found. Will use train/test split for evaluation.")
-        test_size = st.slider("Test set size", 0.1, 0.4, 0.2, 0.05)
-    
-    if st.button(" Train Classification Models", type="primary"):
-        with st.spinner("Training multiple ML models on real data..."):
-            # Prepare features
-            X = df[selected_features].copy()
-            y = df[target_col].copy()
-            
-            # Handle missing values and ensure all features are numeric
-            X_clean = X.copy()
-            
-            for col in X_clean.columns:
-                X_clean[col] = pd.to_numeric(X_clean[col], errors='coerce')
-                X_clean[col] = X_clean[col].fillna(X_clean[col].median())
-            
-            st.info(f"Final feature matrix shape: {X_clean.shape}")
-            st.info(f"Final target shape: {y.shape}")
-            
-            # Prepare test data
+        categorical_encoded_cols = [col for col in df.columns if col.endswith('_encoded')]
+        all_potential_features = numeric_cols + categorical_encoded_cols
+        
+        recommended_features = [
+            'Tenure in Months', 'Monthly Charge', 'Total Charges', 'Total Revenue',
+            'Age', 'Number of Dependents', 'Number of Referrals', 'Satisfaction Score',
+            'CLTV', 'Churn Score', 'TotalServices', 'HighSpender'
+        ]
+        
+        existing_recommended_features = [col for col in recommended_features if col in all_potential_features]
+        
+        # Use existing features if available, otherwise use recommended
+        default_features = features if features else existing_recommended_features
+        
+        selected_features = st.multiselect(
+            "Select features for modeling:", 
+            all_potential_features,
+            default=default_features
+        )
+        
+        if not selected_features:
+            st.warning("Please select at least one feature for modeling.")
+            return
+        
+        st.session_state.selected_features = selected_features
+        
+        # Test data configuration
+        datasets = st.session_state.datasets if 'datasets' in st.session_state.__dict__ else {}
+        if st.session_state.test_data_loaded and 'test' in datasets:
+            use_test_data = st.checkbox("Use separate test dataset", value=True)
             if use_test_data:
-                X_train, y_train = X_clean, y
-                st.info(f"Using separate test dataset with {len(X_test)} samples")
-            else:
-                # Split data into train and test
-                X_train, X_test, y_train, y_test = train_test_split(
-                    X_clean, y, test_size=test_size, random_state=42, stratify=y
-                )
-                st.info(f"Train/test split: {len(X_train)} training samples, {len(X_test)} test samples")
-            
-            # Validate class distribution before training
-            class_counts = y_train.value_counts()
-            unique_classes = y_train.unique()
-            
-            st.subheader(" Target Class Distribution")
-            st.write(f"**Unique classes found:** {sorted(unique_classes)}")
-            st.write(f"**Class distribution:**")
-            for class_val, count in class_counts.items():
-                percentage = (count / len(y_train)) * 100
-                st.write(f"  - Class {class_val}: {count} samples ({percentage:.1f}%)")
-            
-            # Check if we have at least 2 classes
-            if len(unique_classes) < 2:
-                st.error(" **Cannot train models: Only one class found in target variable!**")
-                st.write("**Possible solutions:**")
-                st.write("1. Check if the target column is correctly identified")
-                st.write("2. Verify that your dataset contains both churned and non-churned customers")
-                st.write("3. Review the data cleaning process")
-                return  # Stop execution
-            
-            # Check for severe class imbalance
-            min_class_count = class_counts.min()
-            max_class_count = class_counts.max()
-            imbalance_ratio = max_class_count / min_class_count
-            
-            if imbalance_ratio > 10:
-                st.warning(f" **Severe class imbalance detected!** Ratio: {imbalance_ratio:.1f}:1")
-                st.write("This may affect model performance. Consider using:")
-                st.write("- Stratified sampling")
-                st.write("- Cost-sensitive learning")
-                st.write("- Synthetic data generation (SMOTE)")
-            elif imbalance_ratio > 3:
-                st.info(f"ℹ **Moderate class imbalance detected.** Ratio: {imbalance_ratio:.1f}:1")
-            
-            st.success(f" **Ready to train!** Found {len(unique_classes)} classes with sufficient samples.")
-            
-            # Train models
-            results = train_classification_models(X_train, y_train, X_test, y_test)
-            st.session_state.model_results = results
-            st.session_state.X_test = X_test
-            st.session_state.y_test = y_test
-            st.session_state.model_trained = True
+                test_df = datasets['test']
+                test_df_processed = preprocess_real_data(test_df)
+                test_df_final = create_engineered_features_real(test_df_processed)
+                X_test = test_df_final[selected_features].copy()
+                y_test = test_df_final[target_col].copy()
+                for col in X_test.columns:
+                    X_test[col] = pd.to_numeric(X_test[col], errors='coerce')
+                    X_test[col] = X_test[col].fillna(X_test[col].median())
+        else:
+            use_test_data = False
+            test_size = st.slider("Test set size", 0.1, 0.4, 0.2, 0.05)
         
-        st.success(" Models trained successfully on real data!")
+        if st.button(" Train New Models", type="primary"):
+            with st.spinner("Training models with optimized parameters..."):
+                # Prepare data
+                X = df[selected_features].copy()
+                y = df[target_col].copy()
+                
+                for col in X.columns:
+                    X[col] = pd.to_numeric(X[col], errors='coerce')
+                    X[col] = X[col].fillna(X[col].median())
+                
+                # Split or use test data
+                if use_test_data:
+                    X_train, y_train = X, y
+                else:
+                    X_train, X_test, y_train, y_test = train_test_split(
+                        X, y, test_size=test_size, random_state=42, stratify=y
+                    )
+                
+                # Train models
+                results = train_classification_models(X_train, y_train, X_test, y_test)
+                
+                # Save models
+                model_info = {
+                    'train_samples': len(X_train),
+                    'test_samples': len(X_test) if use_test_data or not use_test_data else 0,
+                    'features_count': len(selected_features),
+                    'target_column': target_col
+                }
+                
+                success, timestamp = save_models(results, selected_features, model_info)
+                
+                if success:
+                    st.success(f" Models trained and saved successfully! (Version: {timestamp})")
+                    st.session_state.model_results = results
+                    st.session_state.model_trained = True
+                    st.session_state.models_loaded = True
+                else:
+                    st.warning(" Models trained but not saved. Using in-memory models.")
+                    st.session_state.model_results = results
+                    st.session_state.model_trained = True
     
+    # Display results if models are trained
     if st.session_state.model_trained:
         results = st.session_state.model_results
         
@@ -1079,14 +1344,19 @@ def show_churn_prediction():
         if 'Random Forest' in results:
             st.subheader(" Feature Importance (Random Forest)")
             rf_model = results['Random Forest']['model']
-            feature_importance = pd.DataFrame({
-                'Feature': selected_features,
-                'Importance': rf_model.feature_importances_
-            }).sort_values('Importance', ascending=False)
             
-            fig = px.bar(feature_importance.head(15), x='Importance', y='Feature', 
-                        orientation='h', title='Top 15 Feature Importances')
-            st.plotly_chart(fig, use_container_width=True)
+            # Use session state selected_features which should always be set
+            feature_list = st.session_state.selected_features if st.session_state.selected_features else []
+            
+            if feature_list and hasattr(rf_model, 'feature_importances_'):
+                feature_importance = pd.DataFrame({
+                    'Feature': feature_list,
+                    'Importance': rf_model.feature_importances_
+                }).sort_values('Importance', ascending=False)
+                
+                fig = px.bar(feature_importance.head(15), x='Importance', y='Feature', 
+                            orientation='h', title='Top 15 Feature Importances')
+                st.plotly_chart(fig, use_container_width=True)
 
 # ... (rest of the functions remain mostly the same, but need to update show_model_performance to handle test data)
 

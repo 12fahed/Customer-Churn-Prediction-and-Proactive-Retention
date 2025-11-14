@@ -8,3 +8,4 @@ scikit-learn
 mlxtend
 textblob
 deap
+joblib
